@@ -1,0 +1,30 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Roles for Gitlab runners to assume"
+Parameters:
+  RunnersAccount:
+    Description: "The account ID where your Gitlab Runners live"
+    Type: "String"
+
+Resources:
+  Role:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: "cicd"
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - "sts:AssumeRole"
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Sub "arn:aws:iam::${RunnersAccount}:root"
+      Policies:
+        - PolicyName: "cicd"
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - "*"
+                Resource:
+                  - "*"
