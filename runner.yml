@@ -26,6 +26,10 @@ Parameters:
     Default: ami-0fb7513bcdc525c3b
   KeyName:
     Type: AWS::EC2::KeyPair::KeyName
+  RunnerTags:
+    Type: String
+    Description: "JSON list of tags to add to the GitLab runner, e.g. [\"linux\", \"foo\"]"
+    Default: "[]"
   GitlabUrl:
     Type: 'String'
     Description: |
@@ -199,7 +203,7 @@ Resources:
             curl -sL "https://github.com/docker/compose/releases/download/1.22.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/bin/docker-compose
             chmod +x /usr/bin/docker-compose
 
-            RUNNER_TOKEN="$(curl -XPOST -H 'Content-Type: application/json' -H 'Accept: application/json' -d '{"token":"${RegistrationToken}","run_untagged":true,"locked":false}' https://gitlab.com/api/v4/runners)"
+            RUNNER_TOKEN="$(curl -XPOST -H 'Content-Type: application/json' -H 'Accept: application/json' -d '{"token": "${RegistrationToken}", "tag_list": ${RunnerTags}, "locked": false}' https://gitlab.com/api/v4/runners)"
 
             systemctl enable docker
             systemctl restart docker
