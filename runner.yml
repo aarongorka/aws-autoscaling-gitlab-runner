@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: "Gitlab runners Auto Scaling Group"
+Description: "GitLab runners Auto Scaling Group"
 
 Parameters:
   CacheBucketName:
@@ -31,10 +31,9 @@ Parameters:
     Description: |
       GitLab instance URL.
     Default: 'https://gitlab.com/'
-  GitlabToken:
+  RegistrationToken:
     Type: 'String'
-    Description: |
-      GitLab Runner token.
+    Description: 'GitLab Runner **registration** token. Not to be confused with a GitLab Runner token.'
     NoEcho: true
   GitlabDockerImage:
     Type: 'String'
@@ -200,19 +199,21 @@ Resources:
             curl -sL "https://github.com/docker/compose/releases/download/1.22.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/bin/docker-compose
             chmod +x /usr/bin/docker-compose
 
+            RUNNER_TOKEN="$(curl -XPOST -H 'Content-Type: application/json' -H 'Accept: application/json' -d '{"token":"${RegistrationToken}","run_untagged":true,"locked":false}' https://gitlab.com/api/v4/runners)"
+
             systemctl enable docker
             systemctl restart docker
 
             curl -L https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.rpm.sh | bash
             yum install -y gitlab-runner
 
-            cat <<EOF > /etc/gitlab-runner/config.toml
+            cat <<EOF | sed "s/RUNNER_TOKEN/${!RUNNER_TOKEN}/g" > /etc/gitlab-runner/config.toml
             concurrent = ${GitlabMaxConcurrentBuilds}
             check_interval = ${GitlabCheckInterval}
 
             [[runners]]
               name = "${AWS::StackName}"
-              token = "${GitlabToken}"
+              token = "RUNNER_TOKEN"
               url = "https://gitlab.com/"
               executor = "docker"
               [runners.docker]
@@ -234,7 +235,7 @@ Resources:
             systemctl restart gitlab-runner
             systemctl status gitlab-runner
 
-            /opt/aws/bin/cfn-signal -e 0 --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}
+            /opt/aws/bin/cfn-signal -e 0 --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region} || true
 
   AutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
