@@ -4,12 +4,16 @@ Parameters:
   RunnersAccount:
     Description: "The account ID where your Gitlab Runners live"
     Type: "String"
+  RoleName:
+    Description: "Name of the role created, should contain 'cicd'"
+    Type: "String"
+    Default: "cicd"
 
 Resources:
   Role:
     Type: "AWS::IAM::Role"
     Properties:
-      RoleName: "cicd"
+      RoleName: !Ref RoleName
       AssumeRolePolicyDocument:
         Statement:
           - Action:
