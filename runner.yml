@@ -241,6 +241,8 @@ Resources:
             systemctl restart gitlab-runner
             systemctl status gitlab-runner
 
+            docker run -d --restart=on-failure -p 5000:5000 -e REGISTRY_PROXY_REMOTEURL="https://registry-1.docker.io" registry:2
+
             /opt/aws/bin/cfn-signal -e 0 --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region} || true
 
   AutoScalingGroup:
